@@ -41,8 +41,14 @@ def construct_word2vec_pairs(G, view_id, common_nodes, pvalue, qvalue, window_si
     """
     path = output_pairs
     list_neigh = []
+    print("Creating Node2Vec Graph")
     G_ = node2vec.Graph(G, False, pvalue, qvalue)
+    print("Preprocessing Transition Probabilities")
+    pp_start_time = time.time()
     G_.preprocess_transition_probs()
+    pp_end_time = time.time()
+    print("Took ", pp_end_time-pp_start_time, " seconds")
+    print("Simulating walks")
     start_time = time.time()
     walks = G_.simulate_walks(n_walk,
                               walk_length)
@@ -50,6 +56,7 @@ def construct_word2vec_pairs(G, view_id, common_nodes, pvalue, qvalue, window_si
     os.makedirs(path, exist_ok=True)
     walk_file = path + "/Walks_" + str(view_id) + ".txt"
     elapsed = end - start_time
+    print("Took ", elapsed, " seconds")
     save_walks(walks, walk_file, elapsed)
     start_time = time.time()
     for walk in walks:

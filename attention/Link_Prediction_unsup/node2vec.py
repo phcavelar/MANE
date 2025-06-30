@@ -5,6 +5,11 @@
 import numpy as np
 import networkx as nx
 import random
+try:
+	from tqdm import tqdm
+except ImportError:
+	def tqdm(*args):
+		return (args)
 
 
 class Graph():
@@ -116,7 +121,7 @@ def alias_setup(probs):
 	'''
 	K = len(probs)
 	q = np.zeros(K)
-	J = np.zeros(K, dtype=np.int)
+	J = np.zeros(K, dtype=int)
 
 	smaller = []
 	larger = []
