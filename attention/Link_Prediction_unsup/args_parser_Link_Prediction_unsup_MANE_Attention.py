@@ -82,7 +82,7 @@ def get_parser():
                         help='learning rate for the model, default=10',
                         default=10)
 
-    parser.add_argument('-bs', '--batch_size',type=float,
+    parser.add_argument('-bs', '--batch_size',type=int,
                         help='batch size for the model, default=256',
                         default=256)
 
