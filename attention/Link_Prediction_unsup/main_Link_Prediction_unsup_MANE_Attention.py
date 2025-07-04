@@ -6,6 +6,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from tqdm import tqdm
 import os
 import networkx as nx
 import numpy as np
@@ -342,6 +343,8 @@ def main(params):
     params.device = device
     print("Running on device: ", device)
     G = read_graphs(params.input_graphs + params.dataset, params.nviews)
+    for i, g in enumerate(G):
+        print(f"Is network {i} connected? {nx.is_connected(g)}")
     common_nodes = sorted(set(G[0]).intersection(*G))
     print('Number of common/core nodes in all networks: ', len(common_nodes))
     node2idx = {n: idx for (idx, n) in enumerate(common_nodes)}
@@ -414,15 +417,17 @@ def main(params):
             if min_pair_length > nodes_idx_nets[n_net].size:
                 min_pair_length = nodes_idx_nets[n_net].size
         print("Total number of pairs: ", min_pair_length)
+        print(f"Batches per epoch: {len(list(range(0, min_pair_length, params.batch_size)))}")
         print("Training started! \n", flush=True)
 
+        optimizer = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
         epo = 0
 
         while epo <= params.epochs - 1:
             start_init = time.time()
             epo += 1
 
-            optimizer = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
+            # WHY??? optimizer = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
             running_loss = 0
             num_batches = 0
             shuffle_indices_nets = []
@@ -435,19 +440,19 @@ def main(params):
 
             # UNSUPERVISED! model.classifier_w.requires_grad = False
             # UNSUPERVISED! model.classifier_b.requires_grad = False
-            for n_net in range(params.nviews):
+            # UNSUPERVISED! for n_net in range(params.nviews):
                 # UNSUPERVISED! model.attention[n_net].requires_grad = False
                 # UNSUPERVISED! model.nn_linears[n_net].weight.requires_grad = False
                 # UNSUPERVISED! model.b_att[n_net].requires_grad = False
-                model.node_embeddings[n_net].weight.requires_grad = True
-                model.neigh_embeddings[n_net].weight.requires_grad = True
+                # UNSUPERVISED! model.node_embeddings[n_net].weight.requires_grad = True
+                # UNSUPERVISED! model.neigh_embeddings[n_net].weight.requires_grad = True
 
             optimizer.zero_grad()  # put here
             # UNSUPERVISED! loss2 = model.supervision_link_binary_class(labels, common_nodes, train_splits_cur, ytrain, params.gamma)
             # UNSUPERVISED! loss2.backward()
             # UNSUPERVISED! running_loss += loss2.detach()
 
-            for count in range(0, min_pair_length, params.batch_size):
+            for count in tqdm(range(0, min_pair_length, params.batch_size), leave=False):
 
                 loss1 = model(count, shuffle_indices_nets, nodes_idx_nets, neigh_idx_nets, params.alpha, params.beta)
                 loss1.backward()
@@ -456,27 +461,27 @@ def main(params):
                 running_loss += loss1.detach().item()
 
                 num_batches += 1
-                if int(num_batches % 100) == 0:
-                    print(num_batches, " batches completed\n")
-                elif not fifty and (count / min_pair_length) * 100 > 50:
-                    print("############# 50% epoch is completed #################\n")
-                    fifty = True
+                # WHY??? if False and int(num_batches % 100) == 0:
+                    # WHY??? print(num_batches, " batches completed\n")
+                # WHY??? elif not fifty and (count / min_pair_length) * 100 > 50:
+                    # WHY??? print("############# 50% epoch is completed #################\n")
+                    # WHY??? fifty = True
 
                 optimizer.zero_grad()
-                if device != 'cpu':
-                    torch.cuda.empty_cache()
-                    gc.collect()
+                # WHY??? if device != 'cpu':
+                    # WHY??? torch.cuda.empty_cache()
+                    # WHY??? gc.collect()
 
             # UNSUPERVISED! model.classifier_w.requires_grad = True
             # UNSUPERVISED! model.classifier_b.requires_grad = True
-            for n_net in range(params.nviews):  # len(G)
+            # UNSUPERVISED! for n_net in range(params.nviews):  # len(G)
                 # UNSUPERVISED! model.attention[n_net].requires_grad = True
                 # UNSUPERVISED! model.nn_linears[n_net].weight.requires_grad = True
                 # UNSUPERVISED! model.b_att[n_net].requires_grad = True
-                model.node_embeddings[n_net].weight.requires_grad = False
-                model.neigh_embeddings[n_net].weight.requires_grad = False
-                model.node_embeddings[n_net].weight.grad = None
-                model.neigh_embeddings[n_net].weight.grad = None
+                # UNSUPERVISED! model.node_embeddings[n_net].weight.requires_grad = False
+                # UNSUPERVISED! model.neigh_embeddings[n_net].weight.requires_grad = False
+                # UNSUPERVISED! model.node_embeddings[n_net].weight.grad = None
+                # UNSUPERVISED! model.neigh_embeddings[n_net].weight.grad = None
 
             optimizer.zero_grad()
 
